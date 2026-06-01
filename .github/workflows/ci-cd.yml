@@ -17,10 +17,10 @@ jobs:
 
     steps:
       - name: Descargar codigo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
@@ -36,9 +36,10 @@ jobs:
 
       - name: Configurar llave SSH
         if: github.ref == 'refs/heads/main' && env.HAS_VPS_SECRETS == 'true'
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
 
       - name: Registrar host conocido
         if: github.ref == 'refs/heads/main' && env.HAS_VPS_SECRETS == 'true'
@@ -49,7 +50,7 @@ jobs:
       - name: Crear directorio remoto
         if: github.ref == 'refs/heads/main' && env.HAS_VPS_SECRETS == 'true'
         run: |
-          ssh -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" \
+          ssh -i ~/.ssh/deploy_key -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" \
             "mkdir -p ~/cicd-vps-aws-demo"
 
       - name: Copiar archivos hacia la VPS
@@ -59,13 +60,13 @@ jobs:
             --exclude ".git" \
             --exclude "node_modules" \
             --exclude "dist" \
-            -e "ssh -p $VPS_PORT" \
+            -e "ssh -i ~/.ssh/deploy_key -p $VPS_PORT" \
             ./ "$VPS_USER@$VPS_HOST:~/cicd-vps-aws-demo/"
 
       - name: Desplegar con Docker Compose
         if: github.ref == 'refs/heads/main' && env.HAS_VPS_SECRETS == 'true'
         run: |
-          ssh -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" << 'EOF'
+          ssh -i ~/.ssh/deploy_key -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" << 'EOF'
             set -e
             cd ~/cicd-vps-aws-demo
             docker compose up -d --build
