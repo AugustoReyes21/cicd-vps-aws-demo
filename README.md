@@ -121,7 +121,7 @@ docker compose ps
 Luego abrir:
 
 ```text
-http://IP_PUBLICA_DE_LA_VPS
+http://100.30.254.186
 ```
 
 ## Evidencia esperada

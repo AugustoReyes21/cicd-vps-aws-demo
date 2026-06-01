@@ -31,7 +31,7 @@ Si las validaciones finalizan correctamente, el workflow configura la llave SSH 
 - Usuario SSH: `ubuntu`.
 - Ruta de despliegue: `~/cicd-vps-aws-demo`.
 - Runtime: Docker y Docker Compose.
-- URL de la aplicacion: `http://IP_PUBLICA_DE_LA_VPS`.
+- URL de la aplicacion: `http://100.30.254.186`.
 
 ## Enlace al video en Google Drive
 
@@ -39,7 +39,7 @@ Pegar aqui el enlace publico o compartido del video en Google Drive.
 
 ## Enlace al repositorio publico de GitHub
 
-Pegar aqui el enlace del repositorio publico de GitHub.
+https://github.com/AugustoReyes21/cicd-vps-aws-demo
 
 ## Evidencia documentada
 
