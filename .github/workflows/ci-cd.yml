@@ -1,0 +1,69 @@
+name: CI/CD hacia VPS AWS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate-build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar pruebas automaticas
+        run: npm test
+
+      - name: Construir proyecto
+        run: npm run build
+
+      - name: Configurar llave SSH
+        if: github.ref == 'refs/heads/main'
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Registrar host conocido
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.VPS_PORT || '22' }}" "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Crear directorio remoto
+        if: github.ref == 'refs/heads/main'
+        run: |
+          ssh -p "${{ secrets.VPS_PORT || '22' }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "mkdir -p ~/cicd-vps-aws-demo"
+
+      - name: Copiar archivos hacia la VPS
+        if: github.ref == 'refs/heads/main'
+        run: |
+          rsync -az --delete \
+            --exclude ".git" \
+            --exclude "node_modules" \
+            --exclude "dist" \
+            -e "ssh -p ${{ secrets.VPS_PORT || '22' }}" \
+            ./ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/cicd-vps-aws-demo/"
+
+      - name: Desplegar con Docker Compose
+        if: github.ref == 'refs/heads/main'
+        run: |
+          ssh -p "${{ secrets.VPS_PORT || '22' }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
+            set -e
+            cd ~/cicd-vps-aws-demo
+            docker compose up -d --build
+            docker image prune -f
+            docker compose ps
+          EOF

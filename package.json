@@ -1,0 +1,28 @@
+{
+  "name": "cicd-vps-aws-demo",
+  "version": "1.0.0",
+  "description": "Aplicacion demo para flujo CI/CD con GitHub Actions y despliegue en una VPS de AWS.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test",
+    "build": "node scripts/build.js"
+  },
+  "keywords": [
+    "ci-cd",
+    "github-actions",
+    "aws",
+    "vps"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
