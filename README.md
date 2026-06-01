@@ -41,21 +41,6 @@ Si los secretos todavia no existen, el workflow ejecuta instalacion, pruebas y b
 
 ## Preparacion de la VPS en AWS
 
-### Opcion automatica con AWS CLI
-
-Si AWS CLI ya esta autenticado en la terminal, se puede crear la VPS y configurar los secretos de GitHub con:
-
-```bash
-chmod +x infra/create-aws-vps.sh
-AWS_REGION=us-east-1 ./infra/create-aws-vps.sh
-gh workflow run ci-cd.yml
-gh run watch --exit-status
-```
-
-El script crea una instancia EC2 Ubuntu, un Security Group con puertos `22` y `80`, una llave SSH local en `.secrets/`, configura los secretos de GitHub y deja listo el despliegue automatico.
-
-### Opcion manual desde la consola AWS
-
 1. Crear una instancia EC2 con Ubuntu Server.
 2. Abrir en el Security Group los puertos `22` para SSH y `80` para HTTP.
 3. Conectarse por SSH:
@@ -123,14 +108,3 @@ Luego abrir:
 ```text
 http://100.30.254.186
 ```
-
-## Evidencia esperada
-
-Para demostrar el funcionamiento se debe mostrar:
-
-- La instancia EC2 creada en AWS.
-- La aplicacion respondiendo desde la IP publica de la VPS.
-- El repositorio publico en GitHub.
-- El archivo `.github/workflows/ci-cd.yml`.
-- Una ejecucion exitosa del workflow en GitHub Actions.
-- Los pasos de validacion, build y despliegue ejecutados correctamente.
