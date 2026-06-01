@@ -37,6 +37,8 @@ En el repositorio de GitHub se deben configurar estos secretos en `Settings > Se
 | `VPS_SSH_KEY` | Llave privada SSH con permiso para entrar a la VPS |
 | `VPS_PORT` | Puerto SSH. Si no se define, se usa `22` |
 
+Si los secretos todavia no existen, el workflow ejecuta instalacion, pruebas y build, pero omite el despliegue. Al configurar los secretos y volver a ejecutar el workflow, el despliegue hacia la VPS queda activo.
+
 ## Preparacion de la VPS en AWS
 
 1. Crear una instancia EC2 con Ubuntu Server.

@@ -9,6 +9,11 @@ on:
 jobs:
   validate-build-deploy:
     runs-on: ubuntu-latest
+    env:
+      HAS_VPS_SECRETS: ${{ secrets.VPS_HOST != '' && secrets.VPS_SSH_KEY != '' }}
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER || 'ubuntu' }}
+      VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
 
     steps:
       - name: Descargar codigo
@@ -30,40 +35,46 @@ jobs:
         run: npm run build
 
       - name: Configurar llave SSH
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && env.HAS_VPS_SECRETS == 'true'
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
       - name: Registrar host conocido
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && env.HAS_VPS_SECRETS == 'true'
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p "${{ secrets.VPS_PORT || '22' }}" "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "$VPS_PORT" "$VPS_HOST" >> ~/.ssh/known_hosts
 
       - name: Crear directorio remoto
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && env.HAS_VPS_SECRETS == 'true'
         run: |
-          ssh -p "${{ secrets.VPS_PORT || '22' }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+          ssh -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" \
             "mkdir -p ~/cicd-vps-aws-demo"
 
       - name: Copiar archivos hacia la VPS
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && env.HAS_VPS_SECRETS == 'true'
         run: |
           rsync -az --delete \
             --exclude ".git" \
             --exclude "node_modules" \
             --exclude "dist" \
-            -e "ssh -p ${{ secrets.VPS_PORT || '22' }}" \
-            ./ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/cicd-vps-aws-demo/"
+            -e "ssh -p $VPS_PORT" \
+            ./ "$VPS_USER@$VPS_HOST:~/cicd-vps-aws-demo/"
 
       - name: Desplegar con Docker Compose
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && env.HAS_VPS_SECRETS == 'true'
         run: |
-          ssh -p "${{ secrets.VPS_PORT || '22' }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
+          ssh -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" << 'EOF'
             set -e
             cd ~/cicd-vps-aws-demo
             docker compose up -d --build
             docker image prune -f
             docker compose ps
           EOF
+
+      - name: Omitir despliegue porque faltan secretos
+        if: github.ref == 'refs/heads/main' && env.HAS_VPS_SECRETS != 'true'
+        run: |
+          echo "Validacion y build completados."
+          echo "Configure VPS_HOST, VPS_USER, VPS_SSH_KEY y VPS_PORT para activar el despliegue automatico."
